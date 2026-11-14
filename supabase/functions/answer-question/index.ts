@@ -169,10 +169,13 @@ Deno.serve(async (req) => {
 
   // --- retrieve (RLS-scoped) -----------------------------------------------
   const minSimilarity = Number(Deno.env.get("MIN_SIMILARITY") ?? "0.5");
+  // `scope` narrows results further than RLS: the private workspace searches only the
+  // caller's own chunks (RLS also lets signed-in users read demo rows), the demo only demo rows.
   const match = await retrieval.rpc("match_rag_chunks", {
     query_embedding: `[${embedding.join(",")}]`,
     match_count: TOP_K,
     min_similarity: Number.isFinite(minSimilarity) ? minSimilarity : 0.5,
+    scope: workspace === "demo" ? "public_demo" : "private",
   });
   if (match.error) {
     log("retrieval_error", { mode: workspace, code: match.error.code });
