@@ -31,7 +31,13 @@ function isAnswer(x: unknown): x is Answer {
   return typeof o.answer === "string" && typeof o.insufficient_evidence === "boolean" && Array.isArray(o.sources);
 }
 
-export async function askQuestion(question: string, onStage?: (stage: AskStage) => void): Promise<Answer> {
+export type Workspace = "demo" | "private";
+
+export async function askQuestion(
+  question: string,
+  workspace: Workspace,
+  onStage?: (stage: AskStage) => void,
+): Promise<Answer> {
   onStage?.("embedding");
   let embedding: number[];
   try {
@@ -42,7 +48,7 @@ export async function askQuestion(question: string, onStage?: (stage: AskStage) 
 
   onStage?.("searching");
   const { data, error } = await supabase.functions.invoke("answer-question", {
-    body: { question, query_embedding: embedding },
+    body: { question, query_embedding: embedding, workspace },
   });
 
   if (error) {

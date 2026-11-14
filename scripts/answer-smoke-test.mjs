@@ -3,9 +3,9 @@
 //
 // Run against a NON-PRODUCTION project, after deploying the function and migrations.
 // Uses TEST_USER_A_* and TEST_USER_B_* plus the anon key only. It inserts a small
-// sample document for user A, asks questions, and cleans up. The last check
-// deliberately fires a burst of requests to confirm rate limiting (it uses up
-// user A's per-minute quota, so wait a minute before using the app).
+// sample document for user A, asks questions, and cleans up. The last checks
+// deliberately fire bursts of requests to confirm rate limiting (they use up
+// user A and this machine's demo per-minute quota, so wait a minute before using the app).
 import { AutoTokenizer, pipeline } from "@huggingface/transformers";
 import { createClient } from "@supabase/supabase-js";
 import { chunkText } from "../src/lib/chunker.ts";
@@ -148,6 +148,36 @@ try {
   const cross = await call(B.token, { question: "What monthly budget did the team agree on?", query_embedding: await embedQ("What monthly budget did the team agree on?") });
   check("user B cannot get an answer from A's document", cross.status === 200 && cross.json?.insufficient_evidence === true && !/120/.test(cross.json?.answer ?? ""), `status=${cross.status}`);
 
+  // --- public demo (no sign-in) ---
+  const anonProbe = newClient();
+  const demoRows = await anonProbe.from("rag_documents").select("id,title").eq("visibility", "public_demo");
+  const demoSeeded = !demoRows.error && demoRows.data.length > 0;
+  check("anonymous visitors cannot see A's private document", !(await anonProbe.from("rag_documents").select("id").eq("id", docId)).data?.length);
+
+  const privNoToken = await call(null, { question: "hi", query_embedding: vectors[0], workspace: "private" });
+  check("private mode without a user token is rejected", privNoToken.status === 401, `status=${privNoToken.status}`);
+
+  const demoLeak = await call(A.token, { question: "What monthly budget did the team agree on?", query_embedding: await embedQ("What monthly budget did the team agree on?"), workspace: "demo" });
+  check(
+    "demo mode never exposes the signed-in user's private document",
+    demoLeak.status === 200 && !/120 dollars|\$120/.test(JSON.stringify(demoLeak.json)) && (demoLeak.json?.sources ?? []).every((s) => s.document_id !== docId),
+    `status=${demoLeak.status}`,
+  );
+
+  if (!demoSeeded) {
+    console.log("INFO  no public_demo documents found: skipping demo answer checks (apply supabase/seed/demo_seed.sql first)");
+  } else {
+    const demoQ = "When is the private beta?";
+    const demo = await call(null, { question: demoQ, query_embedding: await embedQ(demoQ), workspace: "demo" });
+    check("anonymous demo question returns 200", demo.status === 200, `status=${demo.status} ${demo.json?.error ?? ""}`);
+    check("demo answer is grounded (not flagged insufficient)", demo.json?.insufficient_evidence === false, (demo.json?.answer ?? "").slice(0, 100));
+    check("demo answer mentions a month", /october|november/i.test(demo.json?.answer ?? ""));
+    check("demo sources are public demo documents", (demo.json?.sources ?? []).length > 0 && demo.json.sources.every((s) => demoRows.data.some((d) => d.id === s.document_id)));
+
+    const demoOff = await call(null, { question: "Who won the football world cup in 2018?", query_embedding: await embedQ("Who won the football world cup in 2018?"), workspace: "demo" });
+    check("demo abstains on off-topic questions", demoOff.status === 200 && demoOff.json?.insufficient_evidence === true);
+  }
+
   // --- prompt injection inside a source ---
   const inj = await call(A.token, { question: "When do we deploy?", query_embedding: await embedQ("When do we deploy?") });
   const injAnswer = (inj.json?.answer ?? "").trim();
@@ -161,6 +191,13 @@ try {
   }
   const statuses = (await Promise.all(burst)).map((r) => r.status);
   check("burst of requests triggers 429", statuses.includes(429), `statuses=${[...new Set(statuses)].join(",")}`);
+
+  const demoBurst = [];
+  for (let i = 0; i < 10; i++) {
+    demoBurst.push(call(null, { question: "Who won the football world cup in 2018?", query_embedding: vectors[0], workspace: "demo" }));
+  }
+  const demoStatuses = (await Promise.all(demoBurst)).map((r) => r.status);
+  check("demo burst from one visitor triggers 429", demoStatuses.includes(429), `statuses=${[...new Set(demoStatuses)].join(",")}`);
 } catch (e) {
   console.error("Test aborted:", e instanceof Error ? e.message : e);
   failures++;

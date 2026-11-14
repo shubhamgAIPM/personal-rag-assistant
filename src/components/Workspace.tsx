@@ -3,7 +3,6 @@ import type { Session } from "@supabase/supabase-js";
 import { deleteDocument, listDocuments, type DocumentRow } from "../lib/documents.ts";
 import { ChatPanel } from "./ChatPanel.tsx";
 import { IngestError, ingestFile, MAX_FILE_BYTES, STALE_PROCESSING_MS, type IngestStage } from "../lib/ingest.ts";
-import { supabase } from "../lib/supabase.ts";
 
 const STAGE_LABEL: Record<IngestStage, string> = {
   validating: "Checking file…",
@@ -68,20 +67,6 @@ export function Workspace({ session }: { session: Session }) {
 
   return (
     <>
-      <header className="topbar">
-        <div>
-          <h1>Personal RAG Assistant</h1>
-          <p className="tagline">Ask questions about your project knowledge and get source-grounded answers.</p>
-        </div>
-        <div className="who">
-          <span className="badge">Private workspace</span>
-          <span className="email">{session.user.email}</span>
-          <button className="link" onClick={() => void supabase.auth.signOut()}>
-            Sign out
-          </button>
-        </div>
-      </header>
-
       <section className="card">
         <h2>Add a document</h2>
         <p className="hint">
@@ -112,7 +97,7 @@ export function Workspace({ session }: { session: Session }) {
         )}
       </section>
 
-      <ChatPanel hasReadyDocs={docs?.some((d) => d.status === "ready") ?? false} />
+      <ChatPanel workspace="private" hasReadyDocs={docs?.some((d) => d.status === "ready") ?? false} />
 
       <section className="card">
         <h2>Your documents</h2>

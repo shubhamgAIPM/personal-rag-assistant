@@ -3,6 +3,7 @@ import {
   NO_EVIDENCE_MESSAGE,
   RequestError,
   buildUserPrompt,
+  clientIpFrom,
   groqModelParams,
   parseModelOutput,
   resolveAnswer,
@@ -34,6 +35,18 @@ check("rejects over-long question", throwsStatus(() => validateRequest({ questio
 check("rejects wrong embedding length", throwsStatus(() => validateRequest({ question: "q", query_embedding: [1, 2, 3] })) === 400);
 check("rejects NaN/non-number in embedding", throwsStatus(() => validateRequest({ question: "q", query_embedding: [...emb.slice(1), "x"] })) === 400);
 check("rejects absurd embedding values", throwsStatus(() => validateRequest({ question: "q", query_embedding: [...emb.slice(1), 1e9] })) === 400);
+
+check("workspace defaults to private", validateRequest({ question: "q", query_embedding: emb }).workspace === "private");
+check("accepts demo workspace", validateRequest({ question: "q", query_embedding: emb, workspace: "demo" }).workspace === "demo");
+check("rejects unknown workspace", throwsStatus(() => validateRequest({ question: "q", query_embedding: emb, workspace: "admin" })) === 400);
+
+// --- clientIpFrom ---
+const hdr = (o) => ({ get: (n) => o[n.toLowerCase()] ?? null });
+check("prefers cf-connecting-ip", clientIpFrom(hdr({ "cf-connecting-ip": "1.2.3.4", "x-forwarded-for": "9.9.9.9" })) === "1.2.3.4");
+check("uses first x-forwarded-for entry", clientIpFrom(hdr({ "x-forwarded-for": "5.6.7.8, 10.0.0.1" })) === "5.6.7.8");
+check("accepts IPv6", clientIpFrom(hdr({ "x-real-ip": "2001:db8::1" })) === "2001:db8::1");
+check("falls back to unknown", clientIpFrom(hdr({})) === "unknown");
+check("rejects junk header values", clientIpFrom(hdr({ "x-forwarded-for": "evil'; drop table" })) === "unknown");
 
 // --- buildUserPrompt ---
 const chunks = [

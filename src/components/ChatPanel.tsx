@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { AskError, askQuestion, type Answer, type AskStage } from "../lib/ask.ts";
+import { AskError, askQuestion, type Answer, type AskStage, type Workspace } from "../lib/ask.ts";
 
 const MAX_QUESTION_CHARS = 1000;
 
@@ -8,7 +8,7 @@ const STAGE_LABEL: Record<AskStage, string> = {
   searching: "Searching your documents and writing an answer…",
 };
 
-export function ChatPanel({ hasReadyDocs }: { hasReadyDocs: boolean }) {
+export function ChatPanel({ hasReadyDocs, workspace }: { hasReadyDocs: boolean; workspace: Workspace }) {
   const [question, setQuestion] = useState("");
   const [stage, setStage] = useState<AskStage | null>(null);
   const [result, setResult] = useState<{ asked: string; answer: Answer } | null>(null);
@@ -23,7 +23,7 @@ export function ChatPanel({ hasReadyDocs }: { hasReadyDocs: boolean }) {
     setResult(null);
     setStage("embedding");
     try {
-      setResult({ asked: q, answer: await askQuestion(q, setStage) });
+      setResult({ asked: q, answer: await askQuestion(q, workspace, setStage) });
     } catch (err) {
       setError(err instanceof AskError ? err.message : "Something went wrong. Please try again.");
     } finally {
@@ -35,7 +35,11 @@ export function ChatPanel({ hasReadyDocs }: { hasReadyDocs: boolean }) {
     <section className="card">
       <h2>Ask a question</h2>
       {!hasReadyDocs ? (
-        <p className="hint">Upload a document and wait for it to be ready, then ask questions about it here.</p>
+        <p className="hint">
+          {workspace === "demo"
+            ? "The demo documents are not available right now."
+            : "Upload a document and wait for it to be ready, then ask questions about it here."}
+        </p>
       ) : (
         <form onSubmit={(e) => void submit(e)} className="ask">
           <label>

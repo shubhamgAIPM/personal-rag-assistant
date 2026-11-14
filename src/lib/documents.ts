@@ -12,10 +12,13 @@ export interface DocumentRow {
   created_at: string;
 }
 
-export async function listDocuments(): Promise<DocumentRow[]> {
+export async function listDocuments(visibility: DocumentRow["visibility"] = "private"): Promise<DocumentRow[]> {
+  // RLS decides what the caller may see; the filter picks which workspace to show
+  // (a signed-in user can read both their private rows and the public demo rows).
   const { data, error } = await supabase
     .from("rag_documents")
     .select("id,title,source_type,visibility,status,error_message,created_at")
+    .eq("visibility", visibility)
     .order("created_at", { ascending: false });
   if (error) throw new Error("Could not load your documents.");
   return data as DocumentRow[];
