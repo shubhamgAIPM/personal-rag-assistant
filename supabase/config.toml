@@ -425,7 +425,8 @@ enabled = true
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
 
-# Only signed-in users may call this function; the gateway verifies the JWT and
-# the function verifies it again with auth.getUser().
+# verify_jwt is OFF because public-demo visitors are not signed in and have no JWT.
+# The function does its own checks: private mode verifies the user with
+# auth.getUser(); demo mode is rate limited per visitor plus a global daily cap.
 [functions.answer-question]
-verify_jwt = true
+verify_jwt = false

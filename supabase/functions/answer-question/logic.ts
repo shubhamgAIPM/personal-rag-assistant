@@ -59,14 +59,39 @@ export class RequestError extends Error {
   }
 }
 
+export type Workspace = "demo" | "private";
+
 export interface ValidRequest {
   question: string;
   embedding: number[];
+  workspace: Workspace;
+}
+
+/**
+ * Best-effort visitor IP from proxy headers. Only used (after keyed hashing) for
+ * demo rate limiting, never for access control. Falls back to "unknown", which
+ * shares one strict bucket.
+ */
+export function clientIpFrom(headers: { get(name: string): string | null }): string {
+  const candidates = [
+    headers.get("cf-connecting-ip"),
+    headers.get("x-real-ip"),
+    headers.get("x-forwarded-for")?.split(",")[0],
+  ];
+  for (const c of candidates) {
+    const v = c?.trim();
+    if (v && v.length <= 64 && /^[0-9a-fA-F:.]+$/.test(v)) return v;
+  }
+  return "unknown";
 }
 
 export function validateRequest(body: unknown): ValidRequest {
   if (typeof body !== "object" || body === null) throw new RequestError("Invalid request body.");
-  const { question, query_embedding } = body as Record<string, unknown>;
+  const { question, query_embedding, workspace } = body as Record<string, unknown>;
+
+  if (workspace !== undefined && workspace !== "demo" && workspace !== "private") {
+    throw new RequestError("Invalid workspace.");
+  }
 
   if (typeof question !== "string") throw new RequestError("A question is required.");
   const q = question.trim();
@@ -81,7 +106,7 @@ export function validateRequest(body: unknown): ValidRequest {
   if (!query_embedding.every((n) => typeof n === "number" && Number.isFinite(n) && Math.abs(n) <= 10)) {
     throw new RequestError("Invalid query embedding.");
   }
-  return { question: q, embedding: query_embedding as number[] };
+  return { question: q, embedding: query_embedding as number[], workspace: (workspace as Workspace | undefined) ?? "private" };
 }
 
 export interface PromptChunk {

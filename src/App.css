@@ -59,3 +59,7 @@ textarea {
 .sources details { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; margin-bottom: 6px; }
 .sources summary { cursor: pointer; overflow-wrap: anywhere; }
 .sources blockquote { margin: 8px 0 4px; padding-left: 10px; border-left: 3px solid var(--border); color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.9rem; }
+
+.tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+.tab { background: var(--card); color: var(--text); border: 1px solid var(--border); }
+.tab.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }

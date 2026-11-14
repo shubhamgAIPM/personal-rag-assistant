@@ -140,6 +140,21 @@ try {
     !aMatch.error && aMatch.data.some((r) => r.document_id === docId),
     aMatch.error?.message,
   );
+  const aPrivate = await A.client.rpc("match_rag_chunks", { ...rpcArgs, scope: "private" });
+  check("scope=private still returns A's own chunk", !aPrivate.error && aPrivate.data.some((r) => r.document_id === docId), aPrivate.error?.message);
+  const aDemoScope = await A.client.rpc("match_rag_chunks", { ...rpcArgs, scope: "public_demo" });
+  check("scope=public_demo never returns A's private chunk", !aDemoScope.error && !aDemoScope.data.some((r) => r.document_id === docId), aDemoScope.error?.message);
+  const ownDocs = await A.client.from("rag_documents").select("id").eq("visibility", "private").eq("owner_id", A.userId);
+  const ownIds = new Set((ownDocs.data ?? []).map((d) => d.id));
+  check(
+    "scope=private returns only the caller's own private documents (no public demo)",
+    !aPrivate.error && aPrivate.data.length > 0 && aPrivate.data.every((r) => ownIds.has(r.document_id)),
+    aPrivate.error?.message,
+  );
+  const anonPrivate = await anon.rpc("match_rag_chunks", { ...rpcArgs, scope: "private" });
+  check("anonymous scope=private returns nothing", !anonPrivate.error && anonPrivate.data.length === 0, anonPrivate.error?.message);
+  const badScope = await A.client.rpc("match_rag_chunks", { ...rpcArgs, scope: "bogus" });
+  check("unknown scope returns nothing", !badScope.error && badScope.data.length === 0, badScope.error?.message);
   const bMatch = await B.client.rpc("match_rag_chunks", rpcArgs);
   check(
     "B's retrieval never returns A's chunk",
