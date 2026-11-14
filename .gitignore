@@ -1,0 +1,13 @@
+# dependencies and build output
+node_modules
+dist
+
+# secrets: never commit
+.env
+.env.*
+!.env.example
+supabase/.env
+supabase/.temp
+
+# editor/OS
+.DS_Store
