@@ -4,7 +4,7 @@ Ask questions about your own documents and get short answers **with the exact so
 
 > **Status: working MVP, not production software.** It is a portfolio project built to show a small, honest RAG product end to end. See [Known limitations](#known-limitations).
 
-**Live demo:** _coming soon (deployment in progress)_
+**Live demo:** https://shubhamgaipm.github.io/personal-rag-assistant/ (no sign-in needed; the first question downloads a ~35 MB search model, so it is slow once)
 
 ## What it does
 
