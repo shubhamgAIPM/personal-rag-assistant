@@ -1,7 +1,7 @@
 // Tests the chunker with the real bge-small tokenizer.
 //   node scripts/test-chunker.mjs
 import { AutoTokenizer } from "@huggingface/transformers";
-import { chunkText, DEFAULT_CHUNK_OPTIONS } from "../src/lib/chunker.ts";
+import { chunkText, DEFAULT_CHUNK_OPTIONS, embeddingText, MAX_CONTEXT_CHARS } from "../src/lib/chunker.ts";
 import {
   MODEL_ID,
   MODEL_REVISION,
@@ -130,6 +130,22 @@ const trailing = chunkText("# A\n\nBody.\n\n## Empty end", count);
 check("trailing heading without body makes no chunk", trailing.length === 1 && trailing[0].locator === "A", `chunks=${trailing.length}`);
 const plain = chunkText("Just some text without any headings. It has two sentences.", count);
 check("text without headings has a null locator", plain.length === 1 && plain[0].locator === null);
+
+// 8c. Contextual embedding text
+const withPath = chunkText("# Doc title\n\n## Pricing\n\nThe plan costs 8 dollars.", count)[0];
+check("embedding text starts with the section path", embeddingText(withPath).startsWith("Doc title > Pricing\n\n"), JSON.stringify(embeddingText(withPath).slice(0, 40)));
+check("embedding text still contains the chunk text", embeddingText(withPath).endsWith(withPath.content));
+check("stored chunk content is not modified by the path", !withPath.content.startsWith("Doc title >"));
+check("no locator means embedding text equals content", embeddingText({ content: "abc", locator: null }) === "abc");
+const longPath = "x".repeat(500);
+check("overlong section path is capped", embeddingText({ content: "abc", locator: longPath }).split("\n\n")[0].length === MAX_CONTEXT_CHARS);
+check(
+  "path + chunk stays within the model limit for every chunk of a long document",
+  chunks.every((c) => count(embeddingText(c)) <= HARD_LIMIT),
+  `max=${Math.max(...chunks.map((c) => count(embeddingText(c))))} limit=${HARD_LIMIT}`,
+);
+const deep = chunkText(`# ${"A".repeat(60)}\n\n## ${"B".repeat(60)}\n\n### ${"C".repeat(60)}\n\n${para(1, 40)}`, count);
+check("deeply nested long headings still fit the model limit", deep.every((c) => count(embeddingText(c)) <= HARD_LIMIT), `max=${Math.max(...deep.map((c) => count(embeddingText(c))))}`);
 
 // 9. Option validation
 let threw = false;

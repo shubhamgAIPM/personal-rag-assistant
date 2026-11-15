@@ -237,3 +237,17 @@ export function chunkText(
 
   return chunks.map((c, i) => ({ ...c, index: i }));
 }
+
+/** Longest section path prepended to a chunk for embedding (keeps total length well under the model limit). */
+export const MAX_CONTEXT_CHARS = 160;
+
+/**
+ * The text that is EMBEDDED for a chunk: the section path followed by the chunk text, so a small
+ * chunk carries its document and section context ("Doc title > Section"). The STORED and DISPLAYED
+ * content stays the chunk text alone. Queries are embedded without any prefix of this kind.
+ */
+export function embeddingText(chunk: { content: string; locator: string | null }): string {
+  if (!chunk.locator) return chunk.content;
+  const context = chunk.locator.length > MAX_CONTEXT_CHARS ? chunk.locator.slice(0, MAX_CONTEXT_CHARS) : chunk.locator;
+  return `${context}\n\n${chunk.content}`;
+}

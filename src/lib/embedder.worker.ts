@@ -1,7 +1,7 @@
 // Runs chunking + embedding off the main thread so the UI stays responsive.
 // Model files are downloaded from Hugging Face on first use and cached by the browser.
 import { AutoTokenizer, env, pipeline } from "@huggingface/transformers";
-import { chunkText } from "./chunker.ts";
+import { chunkText, embeddingText } from "./chunker.ts";
 import { MODEL_DTYPE, MODEL_ID, MODEL_REVISION, QUERY_PREFIX } from "./embeddingConfig.ts";
 
 env.allowLocalModels = false;
@@ -70,8 +70,8 @@ self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
     const results: { index: number; content: string; locator: string | null; tokens: number; embedding: number[] }[] = [];
     for (let i = 0; i < chunks.length; i += BATCH_SIZE) {
       const batch = chunks.slice(i, i + BATCH_SIZE);
-      // Documents are embedded WITHOUT the query prefix.
-      const vectors = await embed(extractor, batch.map((c) => c.content));
+      // Documents are embedded WITHOUT the query prefix, but WITH their section path (see embeddingText).
+      const vectors = await embed(extractor, batch.map((c) => embeddingText(c)));
       batch.forEach((c, j) => results.push({ ...c, embedding: vectors[j] }));
       post({ type: "progress", id: req.id, stage: "embedding", done: Math.min(i + BATCH_SIZE, chunks.length), total: chunks.length });
     }

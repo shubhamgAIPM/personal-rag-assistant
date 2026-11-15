@@ -4,7 +4,7 @@
 // Uses TEST_USER_A_* credentials and the anon key only. Cleans up after itself.
 import { AutoTokenizer, pipeline } from "@huggingface/transformers";
 import { createClient } from "@supabase/supabase-js";
-import { chunkText } from "../src/lib/chunker.ts";
+import { chunkText, embeddingText } from "../src/lib/chunker.ts";
 import {
   EMBEDDING_DIM,
   EMBEDDING_MODEL_LABEL,
@@ -67,7 +67,7 @@ const embed = async (texts) => (await extractor(texts, { pooling: "cls", normali
 // discriminate between them. Production sizes are covered by scripts/test-chunker.mjs.
 const chunks = chunkText(DOC, count, { targetTokens: 60, maxTokens: 100, overlapTokens: 10 });
 check("document produced chunks", chunks.length >= 3, `chunks=${chunks.length}`);
-const vectors = await embed(chunks.map((c) => c.content));
+const vectors = await embed(chunks.map((c) => embeddingText(c)));
 check("embeddings have the expected dimension", vectors.every((v) => v.length === EMBEDDING_DIM), `dim=${vectors[0]?.length}`);
 
 let docId = null;

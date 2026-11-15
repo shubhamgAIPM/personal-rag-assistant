@@ -62,6 +62,7 @@ Deliberately left out: private GitHub access, scheduled syncing, web search, rer
 
 - **A defect found by testing:** private-workspace answers could cite *demo* documents, because every signed-in user is allowed to read demo rows. The first test passed anyway, because it did not inspect which sources were cited. Printing the sources revealed it. Fix: a `scope` argument on the search function, plus database-level and end-to-end tests. Lesson: a test that checks the answer but not its provenance can pass while the product is wrong.
 - **A defect found by the evaluation, and the change it led to:** citation section labels were wrong 20 times out of 22, because a chunk stored only the heading where it started. The fix was to start a new chunk at every heading and label it with the full heading path. Re-measuring showed the labels at 100%, but also that smaller chunks hurt vague questions. A fix that improves one measure can cost another, so every change gets re-measured.
+- **A prediction that was wrong:** I expected embedding each chunk with its section path to fix vague questions. It helped specific questions slightly (the right passage first 10 to 11 times out of 17) but not vague ones. Inspecting the top 10 showed why: for "tell me about the project" every chunk scores about the same, so there is nothing to rank. I also checked whether flat scores could flag vague questions automatically; they could not, because some correct specific questions are just as flat, and a cutoff chosen from 20 questions would only be fitting the test. Vague questions need a product decision, not a better embedding.
 - **An honest limit of the measurement itself:** my own earlier test runs used up the demo's daily question cap, so one evaluation question could not be run. I recorded it as not scored instead of assuming it passed.
 - **Smaller lessons:**
   - A similarity cutoff cannot tell "about this product but not documented" from "answerable".
@@ -71,4 +72,4 @@ Deliberately left out: private GitHub access, scheduled syncing, web search, rer
 
 ## 9. What I would do next
 
-Fix vague and overview questions (for example, embed each chunk with its title and section path, or add a summary chunk per document) and re-measure; look at multi-source questions; make the evaluation runnable without the visitor cap; grow the corpus so rank-based measures mean more; then add PDF and GitHub import.
+Decide how to handle vague questions (a document picker with an overview mode, or a clarifying question) and re-measure; look at multi-source questions; make the evaluation runnable without the visitor cap; grow the corpus so rank-based measures mean more; then add PDF and GitHub import.

@@ -10,7 +10,7 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AutoTokenizer, pipeline } from "@huggingface/transformers";
-import { chunkText } from "../src/lib/chunker.ts";
+import { chunkText, embeddingText } from "../src/lib/chunker.ts";
 import { EMBEDDING_DIM, EMBEDDING_MODEL_LABEL, MODEL_DTYPE, MODEL_ID, MODEL_REVISION } from "../src/lib/embeddingConfig.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -35,7 +35,7 @@ for (const file of files) {
   const chunks = chunkText(text, count);
   const vectors = [];
   for (let i = 0; i < chunks.length; i += 8) {
-    const batch = chunks.slice(i, i + 8).map((c) => c.content);
+    const batch = chunks.slice(i, i + 8).map((c) => embeddingText(c));
     vectors.push(...(await extractor(batch, { pooling: "cls", normalize: true })).tolist());
   }
   if (vectors.some((v) => v.length !== EMBEDDING_DIM)) throw new Error("Unexpected embedding dimension");

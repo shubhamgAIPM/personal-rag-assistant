@@ -6,8 +6,12 @@ export const MODEL_ID = "Xenova/bge-small-en-v1.5";
 export const MODEL_REVISION = "ea104dacec62c0de699686887e3f920caeb4f3e3";
 export const MODEL_DTYPE = "q8" as const;
 export const EMBEDDING_DIM = 384;
-// Stored per chunk so a model mismatch is detectable later.
-export const EMBEDDING_MODEL_LABEL = `${MODEL_ID}@${MODEL_REVISION.slice(0, 8)}:${MODEL_DTYPE}`;
+// How chunk text is prepared before embedding. Bump this if the preparation changes, because
+// stored vectors made a different way are not comparable and must be re-embedded.
+//   ctx1 = section path + "\n\n" + chunk text (see embeddingText in chunker.ts)
+export const EMBEDDING_INPUT_FORMAT = "ctx1";
+// Stored per chunk so a model or preparation mismatch is detectable later.
+export const EMBEDDING_MODEL_LABEL = `${MODEL_ID}@${MODEL_REVISION.slice(0, 8)}:${MODEL_DTYPE}+${EMBEDDING_INPUT_FORMAT}`;
 
 // bge-small has a 512-token input limit including [CLS] and [SEP].
 export const MODEL_MAX_TOKENS = 512;
