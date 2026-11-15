@@ -115,7 +115,7 @@ Needs only the public Supabase URL and publishable key in `.env.local`. A full r
 
 ## Next changes to try, then re-measure
 
-1. **Vague and overview questions (needs a product decision).** Options: a document picker with an "overview" mode that reads a document's opening sections, a clarifying question, or an instruction in the prompt to ask which topic or document the user means. Retrieval tweaks alone did not fix it.
+1. **Vague and overview questions (decided).** Retrieval tweaks alone did not fix it. Chosen approach: an instruction in the prompt to ask which topic or document the user means when a question is too broad, plus the titles of the documents the model was shown. Success criteria, set in advance (see the [case study](case-study.md#10-version-2-the-plan)): the two vague questions ask for clarification or give a focused overview, no specific question gets worse, refusals stay correct. Fallback if that fails: a document picker with an overview mode.
 2. **Measure the answer-level effect of the section-path embedding** once the demo's daily cap resets, and re-run the question that was rate limited (E20).
 3. **Multi-source synthesis (E04).** Check whether a clearer instruction about combining sources helps.
 4. **A way to run the evaluation without the visitor cap**, for example against a dedicated test account's private workspace.

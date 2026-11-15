@@ -112,7 +112,7 @@ docs/           case study and evaluation write-up
 ## Known limitations
 
 - **Vague questions work poorly.** A question like "explain the project in 2 lines" matches chunks only weakly, and the assistant may still answer from them.
-- **Vague questions are still a weak spot.** "Tell me about the project" has nothing specific to match, so the right passage is not retrieved and the answer is unfocused. Smaller section chunks (which fixed the citation labels) made it a little worse, and embedding each chunk with its section path did not fix it. See the [evaluation](docs/evaluation-results.md).
+- **Vague questions are still a weak spot.** "Tell me about the project" has nothing specific to match, so the right passage is not retrieved and the answer is unfocused. Smaller section chunks (which fixed the citation labels) made it a little worse, and embedding each chunk with its section path did not fix it. Planned fix for version 2: have the assistant ask which topic or document the user means. See the [evaluation](docs/evaluation-results.md).
 - **A question that needs two sources can be half answered** (seen once in the evaluation).
 - **Only Markdown and plain text** are supported. PDF and GitHub import are not built yet.
 - **Visitors cannot upload without signing in.** Anonymous upload needs bot protection first.
