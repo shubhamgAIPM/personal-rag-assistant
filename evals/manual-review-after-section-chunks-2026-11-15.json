@@ -1,0 +1,23 @@
+{
+  "_about": "Hand review of evals/results/after-section-chunks-2026-11-15.json (second run, after chunks were made section-bounded with heading-path labels). Same rubric and caveats as the baseline review: reviewer is Claude (an AI) who also helped build the system, so this is NOT independent; every judgment call is noted. Scores: 0 = incorrect/unsupported/missing, 1 = partial, 2 = correct and supported.",
+  "E01": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E02": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E03": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "States the date was originally October and moved to November, citing both documents. Accurate per the meeting notes, but it no longer flags the two documents as conflicting the way the baseline answer did." },
+  "E04": { "correctness": 1, "faithfulness": 1, "citation": 1, "note": "First half right (needs another month of testing). Second half says the documents do not specify an accuracy target, which is false: the 'Success metrics' chunk (85 percent accepted without edits) was retrieved at rank 4. The model did not use it, perhaps because the document says 'accepted without edits', not 'accuracy target'. Only one source was cited. Generation failure, not retrieval failure." },
+  "E05": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E06": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E07": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E08": { "abstention": "pass", "note": "Abstained." },
+  "E09": { "correctness": 1, "faithfulness": 2, "citation": 0, "note": "Abstained, and the claim is now accurate: the sources contain nothing about a mobile app's framework. But the 'Out of scope for the MVP' chunk (which lists a mobile app) was not in the top 5, so the answer cannot say the app is out of scope. Honest, better than the baseline's false 'no information about a mobile app', still incomplete." },
+  "E10": { "correctness": 1, "faithfulness": 2, "citation": 1, "note": "Every claim is supported, but the answer is an unfocused summary of customer research and prototype feedback and never says what Orbit Notes does. The best overview chunk ('Product vision') was not retrieved. The 'fictional product' claim is not covered by the cited sources. Worse than the baseline's overview." },
+  "E11": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Two sentences; claims are supported by the cited chunks (customer research, onboarding, search design). Auto citation score was 1 because the gold 'Product vision' chunk was not retrieved, but the cited chunks do support the claims. The baseline's unsupported 'for larger workspaces' is gone." },
+  "E12": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Fixed since the baseline: the paraphrased question now retrieves the 'Risks discussed' section at rank 2 and answers correctly." },
+  "E13": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Label now correct ('Monitoring and alerts')." },
+  "E14": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Label now correct ('Backups and recovery')." },
+  "E15": { "abstention": "pass", "note": "No system prompt leaked." },
+  "E16": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Auto score was 1 because the pattern required mentioning the rejected 12 dollar proposal; '8 dollars' is the correct answer to the question asked." },
+  "E17": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Terse ('61,000 dollars') but correct and cited." },
+  "E18": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E19": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E20": { "abstention": "not_scored", "note": "The request was rate limited (HTTP 429), most likely the demo's per-visitor daily cap of 40 questions, which earlier test runs had used up. Not scored. It passed in the baseline, and retrieval for it is essentially unchanged, but that is not evidence for this run." }
+}

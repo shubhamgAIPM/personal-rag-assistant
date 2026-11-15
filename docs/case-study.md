@@ -25,7 +25,7 @@ Deliberately left out: private GitHub access, scheduled syncing, web search, rer
 
 ## 4. Architecture
 
-- **Ingestion:** a file is split into chunks of about 350 tokens (by headings, paragraphs and sentences, with a small overlap) and embedded **in the browser** with a small open model. This avoids an embedding API and keeps document text off a third-party embedding service. Cost: the first question downloads about 35 MB.
+- **Ingestion:** a file is split into chunks (a new chunk starts at every heading, so a chunk never spans two sections; long sections are split at about 350 tokens with a small overlap) and embedded **in the browser** with a small open model. This avoids an embedding API and keeps document text off a third-party embedding service. Cost: the first question downloads about 35 MB.
 - **Retrieval:** a vector search in Postgres (pgvector), run **on the server as the asking user**, so database row-level security decides what can be searched.
 - **Generation:** a Supabase Edge Function sends the top chunks to a Groq-hosted model with a strict "use only these sources" prompt and requires structured output.
 - **Authorization:** private rows are readable only by their owner; demo rows are explicitly marked. The private workspace searches only your own chunks, and the demo only demo chunks.
@@ -42,12 +42,13 @@ Deliberately left out: private GitHub access, scheduled syncing, web search, rer
 
 ## 6. Evaluation (summary)
 
-20 questions on 3 fictional documents (8 chunks); retrieval and answers scored separately. Full details and caveats are in [evaluation-results.md](evaluation-results.md).
+20 questions on 3 fictional documents; retrieval and answers scored separately, two runs (a baseline, then one after a fix). Full details and caveats are in [evaluation-results.md](evaluation-results.md).
 
-- **Retrieval:** the right passage was in the top 5 for 16 of 17 questions, but ranked first only 41% of the time. Hit@5 is flattered by the tiny corpus.
-- **Answers:** 15 of 16 answerable questions fully correct; 3 of 3 refusals correct. Faithfulness averaged 1.88 out of 2.
-- **Examples:** the conflicting beta date was reported as a conflict, with both sources cited. A prompt-extraction attempt leaked nothing.
-- **Failures:** a paraphrased question missed in retrieval (honest refusal, but unhelpful), and a wrong claim that the documents say nothing about a mobile app (they list it as out of scope).
+- **Baseline:** the right passage was in the top 5 for 16 of 17 questions (flattered by an 8-chunk corpus) and first only 41% of the time. 15 of 16 answerable questions were fully correct, and 3 of 3 refusals were correct.
+- **The defect it found:** citation section labels were wrong 20 times out of 22 (the quoted excerpt was right, the heading beside it was not).
+- **After the fix** (chunks stay inside one section, labelled with the heading path): labels **9% to 100% correct**; the right passage first **41% to 59%**; a paraphrased question that failed now works.
+- **What it cost:** vague "overview" questions got worse, and one two-document question was only half answered. Net answer quality was about the same (14 of 16 fully correct instead of 15, faithfulness slightly better), and with 20 questions and one run each that difference is within noise.
+- **Examples that worked:** a date that conflicts between two documents was handled with both sources cited; a prompt-extraction attempt leaked nothing.
 
 ## 7. Trade-offs
 
@@ -59,8 +60,9 @@ Deliberately left out: private GitHub access, scheduled syncing, web search, rer
 
 ## 8. What I learned
 
-- **Biggest defect found by testing:** private-workspace answers could cite *demo* documents, because every signed-in user is allowed to read demo rows. The first test passed anyway, because it did not inspect which sources were cited. Printing the sources revealed it. Fix: a `scope` argument on the search function, plus database-level and end-to-end tests. Lesson: a test that checks the answer but not its provenance can pass while the product is wrong.
-- **Biggest defect found by the evaluation:** citation section labels were wrong 20 times out of 22, because a chunk only stores the heading where it starts. The excerpts were right, so the answers could still be verified, but the label looked authoritative and was misleading. This is the next fix.
+- **A defect found by testing:** private-workspace answers could cite *demo* documents, because every signed-in user is allowed to read demo rows. The first test passed anyway, because it did not inspect which sources were cited. Printing the sources revealed it. Fix: a `scope` argument on the search function, plus database-level and end-to-end tests. Lesson: a test that checks the answer but not its provenance can pass while the product is wrong.
+- **A defect found by the evaluation, and the change it led to:** citation section labels were wrong 20 times out of 22, because a chunk stored only the heading where it started. The fix was to start a new chunk at every heading and label it with the full heading path. Re-measuring showed the labels at 100%, but also that smaller chunks hurt vague questions. A fix that improves one measure can cost another, so every change gets re-measured.
+- **An honest limit of the measurement itself:** my own earlier test runs used up the demo's daily question cap, so one evaluation question could not be run. I recorded it as not scored instead of assuming it passed.
 - **Smaller lessons:**
   - A similarity cutoff cannot tell "about this product but not documented" from "answerable".
   - A character cap is needed as well as a token cap, since the tokenizer turns long unbroken strings into one token.
@@ -69,4 +71,4 @@ Deliberately left out: private GitHub access, scheduled syncing, web search, rer
 
 ## 9. What I would do next
 
-Fix the citation labels and re-measure; improve retrieval for paraphrased questions; add a document picker or a clarifying question for vague queries; grow the corpus so rank-based measures mean more; then add PDF and GitHub import.
+Fix vague and overview questions (for example, embed each chunk with its title and section path, or add a summary chunk per document) and re-measure; look at multi-source questions; make the evaluation runnable without the visitor cap; grow the corpus so rank-based measures mean more; then add PDF and GitHub import.

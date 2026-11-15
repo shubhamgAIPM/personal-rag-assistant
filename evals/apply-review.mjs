@@ -37,6 +37,7 @@ const stats = {
   faithfulness_not_two: answerable.filter((r) => r.manual.faithfulness !== 2).map((r) => r.id),
   citation_avg_answerable: mean(answerable.map((r) => r.manual.citation)),
   abstention_pass: no.filter((r) => r.manual.abstention === "pass").length,
+  abstention_not_scored: no.filter((r) => r.manual.abstention === "not_scored").map((r) => r.id),
   auto_vs_manual_differences: rows
     .filter((r) => r.auto?.correctness !== undefined && r.auto.correctness !== r.manual.correctness)
     .map((r) => `${r.id}: auto ${r.auto.correctness} -> manual ${r.manual.correctness}`),

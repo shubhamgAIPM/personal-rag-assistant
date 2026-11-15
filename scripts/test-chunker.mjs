@@ -53,10 +53,23 @@ check(
 );
 check("chunk indexes are sequential", chunks.every((c, i) => c.index === i));
 check(
-  "locators track headings",
-  chunks.some((c) => c.locator === "Data model") && chunks.some((c) => c.locator === "Privacy"),
+  "locators are heading paths",
+  chunks.some((c) => c.locator === "Architecture > Data model") && chunks.some((c) => c.locator === "Architecture > Privacy"),
   [...new Set(chunks.map((c) => c.locator))].join(" | "),
 );
+// A chunk must never span two sections: at most one heading line per chunk.
+check(
+  "no chunk spans two headings",
+  chunks.every((c) => (c.content.match(/^#{1,6} /gm) ?? []).length <= 1),
+);
+// ...and no text from another section may appear under a section's label (no cross-section overlap).
+const sectionRange = { "Architecture": [1, 40], "Architecture > Data model": [100, 159], "Architecture > Privacy": [200, 229] };
+const stray = chunks.filter((c) => {
+  const [lo, hi] = sectionRange[c.locator] ?? [0, -1];
+  return [...c.content.matchAll(/Sentence number (\d+)/g)].some((m) => Number(m[1]) < lo || Number(m[1]) > hi);
+});
+check("every chunk only contains text from its own section", stray.length === 0, `offending=${stray.map((c) => c.locator).join(",")}`);
+
 check(
   "no chunk ends with a dangling heading",
   chunks.every((c) => !/\n\n#{1,6} [^\n]+$/.test(c.content)),
@@ -104,6 +117,19 @@ check(
   "heading inside code fence is not a locator",
   fencedChunks.every((c) => c.locator !== "not a heading"),
 );
+
+// 8b. Section structure edge cases
+const nested = chunkText("# A\n\n## B\n\nBody of B.\n\n## C\n\nBody of C.\n\n### D\n\nBody of D.", count);
+check(
+  "sibling headings reset the path and nesting extends it",
+  nested.map((c) => c.locator).join(" | ") === "A > B | A > C | A > C > D",
+  nested.map((c) => c.locator).join(" | "),
+);
+check("parent heading with no body does not become its own chunk", nested.length === 3 && nested.every((c) => !/^# A\s*$/.test(c.content.trim())), `chunks=${nested.length}`);
+const trailing = chunkText("# A\n\nBody.\n\n## Empty end", count);
+check("trailing heading without body makes no chunk", trailing.length === 1 && trailing[0].locator === "A", `chunks=${trailing.length}`);
+const plain = chunkText("Just some text without any headings. It has two sentences.", count);
+check("text without headings has a null locator", plain.length === 1 && plain[0].locator === null);
 
 // 9. Option validation
 let threw = false;

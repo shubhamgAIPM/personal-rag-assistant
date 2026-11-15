@@ -90,7 +90,7 @@ Use a **non-production** Supabase project. Node.js 22+ is recommended.
 
 | Command | What it checks |
 |---|---|
-| `node scripts/test-chunker.mjs` | Chunking with the real tokenizer (sizes, overlap, headings, edge cases) |
+| `node scripts/test-chunker.mjs` | Chunking with the real tokenizer (sizes, overlap, section boundaries, heading-path labels, edge cases) |
 | `node scripts/test-answer-logic.mjs` | Request validation, prompt building, citation validation |
 | `deno check supabase/functions/answer-question/index.ts` | Edge Function type check |
 | `node --env-file=.env.local scripts/isolation-test.mjs` | Two-user isolation and search scoping against your Supabase project |
@@ -112,14 +112,14 @@ docs/           case study and evaluation write-up
 ## Known limitations
 
 - **Vague questions work poorly.** A question like "explain the project in 2 lines" matches chunks only weakly, and the assistant may still answer from them.
-- **Citation section labels are often wrong.** The cited excerpt is correct, but the heading shown next to it is where the chunk starts, not where the fact is (20 of 22 in the baseline). This is the next fix.
-- **Paraphrased questions can miss.** In the baseline, one question that avoided the document's wording failed to retrieve the right chunk.
+- **Smaller section chunks help specific questions but hurt vague ones.** After making each chunk stay inside one section (which fixed the citation labels), "tell me about the project" gets a less useful answer. See the [evaluation](docs/evaluation-results.md).
+- **A question that needs two sources can be half answered** (seen once in the evaluation).
 - **Only Markdown and plain text** are supported. PDF and GitHub import are not built yet.
 - **Visitors cannot upload without signing in.** Anonymous upload needs bot protection first.
 - **The "not enough evidence" cutoff is a first guess** (similarity 0.5), and the baseline evaluation shows it cannot tell "about this product but not documented" from "answerable". The evaluation is small (20 questions, 8 chunks); see [evaluation results](docs/evaluation-results.md).
 - **The first question in a browser downloads the search model** (~35 MB plus a runtime), so it is slow.
 - **Free-tier limits apply.** Heavy use of the demo will hit the rate limits and show a "try again shortly" message.
-- Chunks are about 300 to 400 tokens with a small overlap; the settings are not tuned.
+- A new chunk starts at every heading; long sections are split at about 350 tokens with a small overlap. The settings are not tuned.
 
 ## Credits
 

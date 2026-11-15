@@ -2,9 +2,10 @@
 // in Node tests. The caller supplies a token counter built from the embedding
 // model's own tokenizer.
 //
-// Strategy: split into headings/paragraphs/sentences, greedily pack up to the
-// target size, carry a small overlap of trailing sentences into the next chunk,
-// and keep a heading with the text that follows it.
+// Strategy: split into headings/paragraphs/sentences and greedily pack up to the
+// target size. A new chunk always starts at a heading, so a chunk NEVER spans two
+// sections and its locator (the heading path, e.g. "Doc > Section") is accurate.
+// Within a long section, a small overlap of trailing sentences is carried over.
 
 export type TokenCounter = (text: string) => number;
 
@@ -101,6 +102,8 @@ function splitOversized(text: string, count: TokenCounter, opts: ChunkOptions): 
 
 function buildUnits(text: string, count: TokenCounter, opts: ChunkOptions): Unit[] {
   const units: Unit[] = [];
+  // Heading stack, so the locator is a path like "Doc title > Section > Subsection".
+  const stack: { level: number; text: string }[] = [];
   let heading: string | null = null;
   let inFence = false;
 
@@ -113,9 +116,12 @@ function buildUnits(text: string, count: TokenCounter, opts: ChunkOptions): Unit
     const startsInFence = inFence;
     if (fenceCount % 2 === 1) inFence = !inFence;
 
-    const headingMatch = !startsInFence && !trimmed.includes("\n") && /^#{1,6}\s+(.+)$/.exec(trimmed);
+    const headingMatch = !startsInFence && !trimmed.includes("\n") && /^(#{1,6})\s+(.+)$/.exec(trimmed);
     if (headingMatch) {
-      heading = headingMatch[1].trim();
+      const level = headingMatch[1].length;
+      while (stack.length > 0 && stack[stack.length - 1].level >= level) stack.pop();
+      stack.push({ level, text: headingMatch[2].trim() });
+      heading = stack.map((h) => h.text).join(" > ");
       units.push({ text: trimmed, tokens: count(trimmed), heading, isHeading: true, sep: "\n\n" });
       continue;
     }
@@ -201,6 +207,15 @@ export function chunkText(
   const charsOf = (us: Unit[]) => us.reduce((n, u) => n + u.text.length + u.sep.length, 0);
 
   for (const unit of units) {
+    if (unit.isHeading) {
+      // Every heading starts a new chunk. Overlap and heading-only leftovers are dropped
+      // so text from the previous section never leaks under the new section's label.
+      if (current.slice(freshFrom).some((u) => !u.isHeading)) emit();
+      current = [unit];
+      currentTokens = unit.tokens;
+      freshFrom = 0;
+      continue;
+    }
     const unitChars = unit.text.length + unit.sep.length;
     if (
       current.length > freshFrom &&
@@ -218,7 +233,7 @@ export function chunkText(
     current.push(unit);
     currentTokens += unit.tokens;
   }
-  if (current.length > freshFrom) emit();
+  if (current.slice(freshFrom).some((u) => !u.isHeading)) emit();
 
   return chunks.map((c, i) => ({ ...c, index: i }));
 }
