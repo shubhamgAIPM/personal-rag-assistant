@@ -6,6 +6,8 @@ Ask questions about your own documents and get short answers **with the exact so
 
 **Live demo:** https://shubhamgaipm.github.io/personal-rag-assistant/ (no sign-in needed; the first question downloads a ~35 MB search model, so it is slow once)
 
+**Read more:** [case study](docs/case-study.md) · [evaluation results](docs/evaluation-results.md)
+
 ## What it does
 
 - **Public demo, no sign-in:** ask questions about fictional sample documents (an imaginary product called "Orbit Notes").
@@ -103,14 +105,18 @@ src/            React app (components, chunker, embedding worker, ingestion, API
 supabase/       migrations (with rollback scripts), seed, and the answer-question function
 demo-docs/      the fictional sample documents behind the public demo
 scripts/        tests and the demo-seed generator
+evals/          evaluation questions, runner, hand review and results
+docs/           case study and evaluation write-up
 ```
 
 ## Known limitations
 
-- **Vague questions work poorly.** A question like "explain the project in 2 lines" matches chunks only weakly, and the assistant may still answer from them. A "choose which document" picker or a clarifying follow-up is planned.
+- **Vague questions work poorly.** A question like "explain the project in 2 lines" matches chunks only weakly, and the assistant may still answer from them.
+- **Citation section labels are often wrong.** The cited excerpt is correct, but the heading shown next to it is where the chunk starts, not where the fact is (20 of 22 in the baseline). This is the next fix.
+- **Paraphrased questions can miss.** In the baseline, one question that avoided the document's wording failed to retrieve the right chunk.
 - **Only Markdown and plain text** are supported. PDF and GitHub import are not built yet.
 - **Visitors cannot upload without signing in.** Anonymous upload needs bot protection first.
-- **The "not enough evidence" cutoff is a first guess** (similarity 0.5) and has not been tuned on a real evaluation set. A formal evaluation is not done yet, so no quality numbers are claimed.
+- **The "not enough evidence" cutoff is a first guess** (similarity 0.5), and the baseline evaluation shows it cannot tell "about this product but not documented" from "answerable". The evaluation is small (20 questions, 8 chunks); see [evaluation results](docs/evaluation-results.md).
 - **The first question in a browser downloads the search model** (~35 MB plus a runtime), so it is slow.
 - **Free-tier limits apply.** Heavy use of the demo will hit the rate limits and show a "try again shortly" message.
 - Chunks are about 300 to 400 tokens with a small overlap; the settings are not tuned.

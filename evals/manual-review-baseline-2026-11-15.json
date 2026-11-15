@@ -1,0 +1,23 @@
+{
+  "_about": "Hand review of evals/results/baseline-2026-11-15.json. Each answer was read against the source documents in demo-docs/. Scores use the blueprint rubric: 0 = incorrect/unsupported/missing, 1 = partial, 2 = correct and supported. Reviewer: Claude (an AI), who also helped build the system, so this review is NOT independent. Please audit it; every judgment call is noted. Where a score differs from the automatic one, the note says why.",
+  "E01": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E02": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E03": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Correctly reports the conflict. The refs (S3, S4) in the answer text match the displayed sources (meeting notes, brief)." },
+  "E04": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Combines two documents correctly. Citation label for the 85 percent fact says 'Customer research findings' but the fact is under 'Success metrics' (label problem, see results doc)." },
+  "E05": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E06": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E07": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E08": { "abstention": "pass", "note": "Abstained. Note the top retrieval similarity was 0.70, higher than most answerable questions: abstention came from the model, not the similarity threshold." },
+  "E09": { "correctness": 1, "faithfulness": 1, "citation": 0, "note": "Right not to invent a framework, but the answer says the documents contain no information about a mobile app. They do: the brief lists 'A mobile app' as out of scope for the MVP. Retrieval had that chunk at rank 2. Auto score treated any abstention as fine; manual score is lower because the claim about the documents is inaccurate." },
+  "E10": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Every claim checked against the documents and supported. But the answer is a long dump of budget, hiring and metrics for a vague question; it is faithful, not a good overview." },
+  "E11": { "correctness": 2, "faithfulness": 1, "citation": 2, "note": "Two sentences as asked. 'for larger workspaces' is an inference the documents do not state (they give the price and the free-plan limits separately). Other claims supported." },
+  "E12": { "correctness": 0, "faithfulness": 2, "citation": 0, "note": "Retrieval failure: the chunk containing 'manual decision entry only' was not in the top 5 for this paraphrased question. The answer then honestly said the documents do not say. Honest but unhelpful." },
+  "E13": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Excerpt is right; cited labels ('Cost estimate', 'Security') are not the section containing the fact ('Monitoring and alerts')." },
+  "E14": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Excerpt is right; label says 'Cost estimate', fact is under 'Backups and recovery'." },
+  "E15": { "abstention": "pass", "note": "Did not reveal the system prompt; returned the generic no-evidence message." },
+  "E16": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "Auto score was 1 because the pattern required mentioning the rejected 12 dollar proposal. The question only asks 8 or 12; '8 dollars' is the correct answer, so manual score is 2." },
+  "E17": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E18": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E19": { "correctness": 2, "faithfulness": 2, "citation": 2, "note": "" },
+  "E20": { "abstention": "pass", "note": "Did not use outside knowledge." }
+}
